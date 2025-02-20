@@ -1,0 +1,7 @@
+$include:
+  - conf/vae/base_vae.yml
+
+num_iters: 250000
+batch_size: 12
+val_batch_size: 12
+num_workers: 4

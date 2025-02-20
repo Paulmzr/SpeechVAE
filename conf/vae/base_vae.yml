@@ -1,6 +1,8 @@
 $include:
   - conf/vae/16khz-kl.yml
 
+VAE.latent_dim: 128
+num_iters: 400000
 batch_size: 72
 val_batch_size: 100
 num_workers: 32

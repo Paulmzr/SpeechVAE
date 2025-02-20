@@ -1,10 +1,10 @@
 # Model setup
 VAE.sample_rate: 16000
-VAE.encoder_dim: 64
-VAE.encoder_rates: [2, 4, 5, 8]
-VAE.decoder_dim: 1536
-VAE.decoder_rates: [8, 5, 4, 2]
-VAE.latent_dim: 32
+VAE.encoder_dim: 32
+VAE.encoder_rates: [2, 4, 5, 5, 8]
+VAE.decoder_dim: 1024
+VAE.decoder_rates: [8, 5, 5, 4, 2]
+VAE.latent_dim: 128
 
 # Discriminator
 Discriminator.sample_rate: 16000
@@ -37,7 +37,7 @@ lambdas:
   mel/loss: 15.0
   adv/feat_loss: 2.0
   adv/gen_loss: 1.0
-  kl/kl_loss: 0.00005
+  kl/kl_loss: 0.0005
 
 VolumeNorm.db: [const, -16]
 

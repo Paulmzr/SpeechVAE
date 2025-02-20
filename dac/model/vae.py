@@ -148,7 +148,7 @@ class Decoder(nn.Module):
 class DiagonalGaussianDistribution(object):
     def __init__(self, parameters, deterministic=False):
         self.parameters = parameters
-        self.mean, self.logvar = torch.chunk(parameters, 2, dim=1)
+        self.mean, self.logvar = torch.chunk(parameters, 2, dim=1)  # (b, 2*d, t) -> 2 * (b, d, t)
         self.logvar = torch.clamp(self.logvar, -30.0, 20.0)
         self.deterministic = deterministic
         self.std = torch.exp(0.5 * self.logvar)
@@ -162,7 +162,7 @@ class DiagonalGaussianDistribution(object):
         x = self.mean + self.std * torch.randn(self.mean.shape).to(
             device=self.parameters.device
         )
-        return x
+        return x # (b, d, t)
 
     def kl(self, other=None):
         if self.deterministic:
@@ -193,7 +193,7 @@ class DiagonalGaussianDistribution(object):
         )
 
     def mode(self):
-        return self.mean
+        return self.mean # (b, d, t)
 
 
 
@@ -223,7 +223,10 @@ class VAE(BaseModel, CodecMixin):
 
         self.hop_length = np.prod(encoder_rates)
         self.encoder = Encoder(encoder_dim, encoder_rates, latent_dim)
-        self.quant_conv = torch.nn.Conv1d(latent_dim, 2 * latent_dim, kernel_size=1)
+
+        #self.quant_conv = torch.nn.Conv1d(latent_dim, 2 * latent_dim, kernel_size=1)
+        self.fc_mean_and_var = nn.Linear(latent_dim, latent_dim * 2)
+
         #self.n_codebooks = n_codebooks
         #self.codebook_size = codebook_size
         #self.codebook_dim = codebook_dim
@@ -291,11 +294,11 @@ class VAE(BaseModel, CodecMixin):
                 Number of samples in input audio
         """
         z = self.encoder(audio_data) # [B x D x T]
-        moments = self.quant_conv(z) # [B x 2*D x T]
+        z = z.transpose(1,2) # [B x T x D]
+        moments = self.fc_mean_and_var(z).transpose(1,2) # [B x 2*D x T]
+        
         posterior = DiagonalGaussianDistribution(moments)
-        #z, codes, latents, commitment_loss, codebook_loss = self.quantizer(
-        #    z, n_quantizers
-        #)
+
         
         return posterior #z, codes, latents, commitment_loss, codebook_loss
 
@@ -360,11 +363,8 @@ class VAE(BaseModel, CodecMixin):
         """
         length = audio_data.shape[-1]
         audio_data = self.preprocess(audio_data, sample_rate)
-        #z, codes, latents, commitment_loss, codebook_loss = self.encode(
-        #    audio_data, n_quantizers
-        #)
         posterior = self.encode(audio_data)
-        z = posterior.sample()
+        z = posterior.sample() # (b, d, t)
         x = self.decode(z)
         kl_loss = posterior.kl().mean() # B -> 1
         return {

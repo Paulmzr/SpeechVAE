@@ -220,6 +220,7 @@ def val_loop(batch, state, accel):
         "mel/loss": state.mel_loss(recons, signal),
         "stft/loss": state.stft_loss(recons, signal),
         "waveform/loss": state.waveform_loss(recons, signal),
+        "kl/kl_loss": out["kl/kl_loss"],
     }
 
 
